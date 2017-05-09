@@ -25,6 +25,9 @@ audio : audio.c audio.pl.gz.h Makefile
 	#WHY DOES THIS WORK???
 	sed -i '/\.align/ d' audio.s
 
+	#??????????????
+	sed -i '/orq.*-1,/ d' audio.s
+
 	gcc -c audio.s
 	ld -s -N -x -X -static audio.o -o audio
 	strip -R .shstrtab -R .note -R .comment -R .eh_frame -R .eh_frame_hdr -s audio

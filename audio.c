@@ -18,22 +18,21 @@ char *const gzip[3] = {"/bin/gzip", "-d", NULL};
 char *const perl[2] = {"/usr/bin/perl", NULL};
 
 void _start(){
-	asm volatile (
-		"pop %rsi\n"
-	);
-	register int argc asm ("rsi");
+	// asm volatile (
+	// 	"pop %rsi\n"
+	// );
 	register char** rsp asm ("rsp");
-	char **envp = 8+8*argc+rsp;
+	char **envp = rsp+8;
 
-    //define some pipes
+	//define some pipes
 	int gzip_to_perl[2];
 	int source_to_gzip[2];
 	int perl_to_aplay[2];
-    int pid;
-    
+	int pid;
+	
 	pipe(perl_to_aplay);
-    
-    pid = fork();
+	
+	pid = fork();
 	if(pid == 0){
 		//close read end
 		close(perl_to_aplay[0]);
@@ -47,7 +46,7 @@ void _start(){
 			//close read end
 			close(gzip_to_perl[0]);
 			
-		    pipe(source_to_gzip);
+			pipe(source_to_gzip);
 			
 			pid = fork();
 			if(pid == 0){
@@ -70,28 +69,28 @@ void _start(){
 				//close write end
 				close(source_to_gzip[1]);
 				
-		        //copy pipe to stdin
-		        dup2(source_to_gzip[0], 0);
-		        //copy pipe to stdout
-		        dup2(gzip_to_perl[1], 1);
-		        
+				//copy pipe to stdin
+				dup2(source_to_gzip[0], 0);
+				//copy pipe to stdout
+				dup2(gzip_to_perl[1], 1);
+				
 
 				// exit(0);
-		        execve(gzip[0], gzip, envp);
+				execve(gzip[0], gzip, envp);
 			}
 		} else {
 			//perl
 			//close write end
 			close(gzip_to_perl[1]);
 			
-	        //copy pipe to stdin
-	        dup2(gzip_to_perl[0], 0);
-	        //copy pipe to stdout
-	        dup2(perl_to_aplay[1], 1);
-	        
+			//copy pipe to stdin
+			dup2(gzip_to_perl[0], 0);
+			//copy pipe to stdout
+			dup2(perl_to_aplay[1], 1);
+			
 
 			// exit(0);
-	        execve(perl[0], perl, envp);
+			execve(perl[0], perl, envp);
 		}
 	} else {
 		//aplay
