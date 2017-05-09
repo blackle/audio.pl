@@ -4,107 +4,85 @@
 
 #define NULL 0
 
-inline _syscall0(int, fork)
-inline _syscall1(int, pipe, int*, args)
-inline _syscall1(int, close, int, fd)
-inline _syscall1(int, exit, int, ret)
-inline _syscall1(void, wait4, void*, uhh)
-inline _syscall2(int, dup2, int, fd1, int, fd2)
-inline _syscall3(int, write, int, fd, const void *,buf, int, size)
-inline _syscall3(int, execve, const char *,filename, char *const *, argv, char *const*, envp)
-
-char *const aplay[9] = {"/usr/bin/aplay", "-q", "-c", "1", "-r", "22050", "-f", "S16_LE", NULL};
 char *const gzip[3] = {"/bin/gzip", "-d", NULL};
 char *const perl[2] = {"/usr/bin/perl", NULL};
 
 void _start(){
-	// asm volatile (
-	// 	"pop %rsi\n"
-	// );
+	asm volatile (
+		"pop %rsi\n"
+	);
+	register int argc asm ("rsi");
 	register char** rsp asm ("rsp");
-	char **envp = rsp+8;
+	//I'm 80% sure this is the correct way to get the environment pointer on x86_64
+	char **envp = 8+8*argc+rsp;
 
 	//define some pipes
 	int gzip_to_perl[2];
 	int source_to_gzip[2];
-	int perl_to_aplay[2];
 	int pid;
 	
-	pipe(perl_to_aplay);
+	// pipe(gzip_to_perl);
+	INLINE_SYSCALL(pipe, 1, gzip_to_perl);
 	
-	pid = fork();
+	pid = INLINE_SYSCALL(fork, 0);
 	if(pid == 0){
 		//close read end
-		close(perl_to_aplay[0]);
-
-		pipe(gzip_to_perl);
+		//not really needed
+		// INLINE_SYSCALL(close, 1, gzip_to_perl[0]);
+		// close(gzip_to_perl[0]);
 		
-		pid = fork();
+		// pipe(source_to_gzip);
+		INLINE_SYSCALL(pipe, 1, source_to_gzip);
+		
+		pid = INLINE_SYSCALL(fork, 0);
 		if(pid == 0){
+			//don't really need to close any of these because they'll be closed on exit anyway
+			//parent gzip feeder
 			//close pipe we don't need
-			close(perl_to_aplay[1]);
+			// close(gzip_to_perl[1]);
+			
 			//close read end
-			close(gzip_to_perl[0]);
-			
-			pipe(source_to_gzip);
-			
-			pid = fork();
-			if(pid == 0){
-				//parent gzip feeder
-				//close pipe we don't need
-				close(gzip_to_perl[1]);
-				
-				//close read end
-				close(source_to_gzip[0]);
-			
-				write(source_to_gzip[1], audio_pl_gz, audio_pl_gz_len);
+			// close(source_to_gzip[0]);
+		
+			// write(source_to_gzip[1], audio_pl_gz, audio_pl_gz_len);
+			INLINE_SYSCALL(write, 3, source_to_gzip[1], audio_pl_gz, audio_pl_gz_len);
 
-				//done writing
-				close(source_to_gzip[1]);
+			//done writing
+			// close(source_to_gzip[1]);
 
-				// exit(0);
-				exit(0);
-			} else {
-				//gzip
-				//close write end
-				close(source_to_gzip[1]);
-				
-				//copy pipe to stdin
-				dup2(source_to_gzip[0], 0);
-				//copy pipe to stdout
-				dup2(gzip_to_perl[1], 1);
-				
-
-				// exit(0);
-				execve(gzip[0], gzip, envp);
-			}
+			// exit(0);
+			INLINE_SYSCALL(exit, 1, 0);
+			// exit(0);
 		} else {
-			//perl
+			//gzip
 			//close write end
-			close(gzip_to_perl[1]);
+			INLINE_SYSCALL(close, 1, source_to_gzip[1]);
+			// close(source_to_gzip[1]);
 			
 			//copy pipe to stdin
-			dup2(gzip_to_perl[0], 0);
+			INLINE_SYSCALL(dup2, 2, source_to_gzip[0], 0);
+			// dup2(source_to_gzip[0], 0);
 			//copy pipe to stdout
-			dup2(perl_to_aplay[1], 1);
+			INLINE_SYSCALL(dup2, 2, gzip_to_perl[1], 1);
+			// dup2(gzip_to_perl[1], 1);
 			
 
 			// exit(0);
-			execve(perl[0], perl, envp);
+			INLINE_SYSCALL(execve, 3, gzip[0], gzip, envp);
 		}
 	} else {
-		//aplay
-		
+		//perl
 		//close write end
-		close(perl_to_aplay[1]);
+		INLINE_SYSCALL(close, 1, gzip_to_perl[1]);
+		// close(gzip_to_perl[1]);
 		
 		//copy pipe to stdin
-		dup2(perl_to_aplay[0], 0);
-	
-		execve(aplay[0], aplay, envp);
-		//pulseaudio fallback
-		// (*execvp)("paplay", "paplay", "-p", "--raw", "--channels=1", "--rate=22050", NULL);
+		INLINE_SYSCALL(dup2, 2, gzip_to_perl[0], 0);
+		// dup2(gzip_to_perl[0], 0);
 
 		// exit(0);
+
+		INLINE_SYSCALL(execve, 3, perl[0], perl, envp);
+		// execve(perl[0], perl, envp);
 	}
 }

@@ -14,11 +14,11 @@ audio : audio.c audio.pl.gz.h Makefile
 	sed -i '/\.cfi_/ d' audio.s
 	sed -i '/\.ident/ d' audio.s
 	sed -i '/\.note\.GNU-stack/ d' audio.s
-	sed -i '/^\.LFB8/,+2 d' audio.s
+	# sed -i '/^\.LFB7/,+2 d' audio.s
 	#remove useless _start return stuff
-	sed -i '/^\.L23/,+3 d' audio.s
+	# sed -i '/^\.L22/,+3 d' audio.s
 	#jump to return
-	sed -i '/\.L23/ d' audio.s
+	sed -i '/ret/ d' audio.s
 	#remove all sections??
 	sed -i '/^\t\.section/ d' audio.s
 	sed -i '/\.globl\t[^_]/ d' audio.s
@@ -32,5 +32,5 @@ audio : audio.c audio.pl.gz.h Makefile
 	ld -s -N -x -X -static audio.o -o audio
 	strip -R .shstrtab -R .note -R .comment -R .eh_frame -R .eh_frame_hdr -s audio
 	./strip_section_header.py
-	# sed -i 's/\.shstrtab\|\.text\|\.rodata\|\.data//g' audio
+	sed -i 's/\.shstrtab\|\.text\|\.rodata\|\.data//g' audio
 	wc -c audio

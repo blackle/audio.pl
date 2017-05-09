@@ -57,16 +57,29 @@ sub dsp {
   }
   return $melody/4*$decay + $kick/2*$decay2;
 }
-my @buf = map{0}(1..1024);
-for(my$t=0;;$t++){
-  $g = $t % 1024;
-  if($t % 1024 == 0){
-    my $r = pack 's<[1024]', @buf;
-    syswrite(STDOUT, $r);
+
+print "Now Playing: Crashing Ducks\n";
+
+my ($read, $write) = POSIX::pipe();
+my $pid=fork();
+if($pid != 0){
+  POSIX::close( $write );
+  dup2($read, STDIN);
+  exec("/usr/bin/aplay -q -c 1 -r 22050 -f S16_LE");
+} else {
+  POSIX::close($read);
+
+  my @buf = map{0}(1..1024);
+  for(my$t=0;;$t++){
+    $g = $t % 1024;
+    if($t % 1024 == 0){
+      my $r = pack 's<[1024]', @buf;
+      POSIX::write($write, $r, 1024*2);
+    }
+    $dsp_g = dsp($t);
+    if($dsp_g eq chr 4){
+      exit 0;
+    }
+    $buf[$g] = $dsp_g * 32768;
   }
-  $dsp_g = dsp($t);
-  if($dsp_g eq chr 4){
-    exit 0;
-  }
-  $buf[$g] = $dsp_g * 32768;
 }
