@@ -2,49 +2,52 @@ import posix as px
 import sys
 import array
 from math import *
-import cmath
 import random
 
 rate = 22050
 time = 0
-pastsample = 0
-octaves = [1, 2, 4, 8]
 
 def p2m(pitch):
 	global rate
 	return (pi*2*pitch)/rate
 
-# modulator, carrier, delta
-def fm_mod(time, fm, fc, fd):
-	mfm = p2m(fm)
-	mfc = p2m(fc)
-	return sin(mfc * time + fd * cos(time * mfm)/fm);
+def seconds2samples(time):
+	return (1.0*time)*rate
 
-# carrier, phase shift
-def pm_mod(time, fc, ps):
-	mfc = p2m(fc)
-	return sin(mfc * time + ps);
+def samples2seconds(time):
+	return (1.0*time)/rate
 
-#x, y, lambda, theta, phi, sigma, gamma
-def gabor(x, y, l, t, p, s, g)
+samplelength = int(seconds2samples(0.05))+1
+samples = [0]*samplelength
+
+# rosenberg pulse
+def rosenberg(time, ts, cps, p1, p2):
+	s = samples2seconds(time)/ts
+	s %= 1.0/(cps*ts)
+	if (s < 1):
+		return pow(s,p1) - pow(s,p2)
+	else:
+		return 0
 
 def gensample():
 	global time
-	global pastsample
+	global samples
 	time += 1
-	pitch = 200
-	if (time % 10000 == 0):
-		random.shuffle(octaves)
-	newsample = pm_mod(time, pitch*octaves[0], fm_mod(time, pitch*octaves[1], pitch*octaves[2], 100)*octaves[3])
-	pastsample = pastsample*0.9 + newsample*0.1
-	return pastsample
+	newsample = rosenberg(time, 0.007, 100, 2.0, 3.0)
+	samples.pop()
+	samples.insert(0,newsample)
+
+	outsample = 0
+	for x in xrange(0, 100):
+		outsample += samples[x]
+	outsample /= 10.0
+	return outsample
 
 def main():
 	read, write = px.pipe()
 	pid = px.fork()
 	if (pid == 0):
 		px.close(read)
-		px.dup2(write, 1)
 
 		bufsize = 1024
 		buf = array.array('f', [0]*bufsize)
