@@ -1,11 +1,11 @@
 all : audio
 
-audio.pl.gz.h : audio.pl Makefile
-	cat audio.pl | gzip -c > audio.pl.gz
-	xxd -i audio.pl.gz > audio.pl.gz.h
-	wc -c audio.pl.gz
+audio.py.gz.h : audio.py Makefile
+	cat audio.py | gzip -c > audio.py.gz
+	xxd -i audio.py.gz > audio.py.gz.h
+	wc -c audio.py.gz
 
-audio : audio.c audio.pl.gz.h Makefile
+audio : audio.c audio.py.gz.h Makefile
 	gcc -S -s -c -g0 audio.c -Os -nostartfiles -nostdlib -static -fno-builtin
 
 	#process the assembly

@@ -1,11 +1,11 @@
 #include <x86_64-linux-gnu/asm/unistd_64.h>
 #include "syscalls.h"
-#include "audio.pl.gz.h"
+#include "audio.py.gz.h"
 
 #define NULL 0
 
 char *const gzip[3] = {"/bin/gzip", "-d", NULL};
-char *const perl[2] = {"/usr/bin/perl", NULL};
+char *const perl[2] = {"/usr/bin/python2.7", NULL};
 
 void _start(){
 	asm volatile (
@@ -26,63 +26,38 @@ void _start(){
 	
 	pid = INLINE_SYSCALL(fork, 0);
 	if(pid == 0){
-		//close read end
-		//not really needed
+		//close read end, but not really needed
 		// INLINE_SYSCALL(close, 1, gzip_to_perl[0]);
-		// close(gzip_to_perl[0]);
 		
-		// pipe(source_to_gzip);
 		INLINE_SYSCALL(pipe, 1, source_to_gzip);
 		
 		pid = INLINE_SYSCALL(fork, 0);
 		if(pid == 0){
-			//don't really need to close any of these because they'll be closed on exit anyway
-			//parent gzip feeder
-			//close pipe we don't need
-			// close(gzip_to_perl[1]);
-			
-			//close read end
-			// close(source_to_gzip[0]);
+			//we should be closing some pipes here, but they'll be closed on exit anyway
 		
-			// write(source_to_gzip[1], audio_pl_gz, audio_pl_gz_len);
-			INLINE_SYSCALL(write, 3, source_to_gzip[1], audio_pl_gz, audio_pl_gz_len);
+			INLINE_SYSCALL(write, 3, source_to_gzip[1], audio_py_gz, audio_py_gz_len);
 
-			//done writing
-			// close(source_to_gzip[1]);
-
-			// exit(0);
 			INLINE_SYSCALL(exit, 1, 0);
-			// exit(0);
 		} else {
 			//gzip
 			//close write end
 			INLINE_SYSCALL(close, 1, source_to_gzip[1]);
-			// close(source_to_gzip[1]);
 			
 			//copy pipe to stdin
 			INLINE_SYSCALL(dup2, 2, source_to_gzip[0], 0);
-			// dup2(source_to_gzip[0], 0);
 			//copy pipe to stdout
 			INLINE_SYSCALL(dup2, 2, gzip_to_perl[1], 1);
-			// dup2(gzip_to_perl[1], 1);
-			
 
-			// exit(0);
 			INLINE_SYSCALL(execve, 3, gzip[0], gzip, envp);
 		}
 	} else {
 		//perl
 		//close write end
 		INLINE_SYSCALL(close, 1, gzip_to_perl[1]);
-		// close(gzip_to_perl[1]);
 		
 		//copy pipe to stdin
 		INLINE_SYSCALL(dup2, 2, gzip_to_perl[0], 0);
-		// dup2(gzip_to_perl[0], 0);
-
-		// exit(0);
 
 		INLINE_SYSCALL(execve, 3, perl[0], perl, envp);
-		// execve(perl[0], perl, envp);
 	}
 }
