@@ -1,7 +1,7 @@
 all : audio
 
 audio.py.gz.h : audio.py Makefile
-	cat audio.py | gzip -c > audio.py.gz
+	cat audio.py | grep -v '^\t*#' | gzip -c > audio.py.gz
 	xxd -i audio.py.gz > audio.py.gz.h
 	wc -c audio.py.gz
 
