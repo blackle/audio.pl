@@ -61,10 +61,9 @@ _parent:
 		syscall
 
 		; get environ pointer from stack into rdx
-		pop rsi ;argc
-		inc rsi ;argc + 1
-		mov rdx,8
-		imul rdx,rsi ; (argc + 1)*8
+		pop rdx ;argc
+		inc rdx ;argc + 1
+		shl rdx, 3 ; (argc+1)*8
 		add rdx,rsp
 
 		; execve demo 

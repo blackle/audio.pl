@@ -8,6 +8,6 @@ test.py.gz : test.py Makefile
 	wc -c test.py.gz
 
 header : header.s Makefile
-	nasm -f bin -o header header.s
+	nasm -f bin -o header header.s -l annotated.list
 	chmod +x header
 	wc -c header
