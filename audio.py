@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 import posix as px
 import sys
 import array

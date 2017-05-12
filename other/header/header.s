@@ -41,7 +41,7 @@ __gzip:
 __gzip_a1:
 		db '-d',0
 __demo:
-		db '/tmp/demo',0
+		db '.x',0
 
 _start:
 		; fork 
@@ -66,9 +66,6 @@ _parent:
 		mov rdx,8
 		imul rdx,rsi ; (argc + 1)*8
 		add rdx,rsp
-
-		; make arg[0] be /tmp/demo
-		mov qword [rsp], __demo
 
 		; execve demo 
 		mov rax, 59 ;execve
@@ -129,6 +126,6 @@ _child:
 		xor rdx, rdx ;empty environ
 		syscall
 
-		; align 16
+		align 4
 
 filesize	equ	 $ - $$
