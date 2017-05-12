@@ -43,13 +43,24 @@ __gzip_a1:
 __demo:
 		db '/tmp/demo',0
 
-__gzip_args:
-		dq __gzip
-		dq __gzip_a1
-		dq 0
-
 _start:
-		; get environ into rdx
+		; fork 
+		mov rax, 57
+		syscall
+
+		; move to child or parent
+		test rax,rax
+		jz _child
+_parent:
+		;move pid into param1 for wait4 syscall
+		mov rdi, rax
+		xor rsi, rsi ;null
+		xor rdx, rdx ;null
+		xor r10, r10 ;null
+		mov rax, 61
+		syscall
+
+		; get environ pointer from stack into rdx
 		pop rsi ;argc
 		inc rsi ;argc + 1
 		mov rdx,8
@@ -65,17 +76,58 @@ _start:
 		mov	rsi, rsp ;use our args as args
 		syscall
 
+_child:
 		; open self 
 		mov	rdi, __proc
-		mov rax, 2
+		mov rax, 2 ;open
 		xor rsi, rsi
 		xor rdx, rdx
 		syscall
 
-		mov	rdi, filesize
-		mov rax, 60
+		;fd1
+		mov r14, rax
+
+		;seek
+		mov	rdi, __proc
+		mov rax, 8 ;lseek
+		mov rdi, r14
+		mov rsi, filesize
+		xor rdx, rdx
 		syscall
 
-		align 16
+		; open demo 
+		mov	rdi, __demo
+		mov rax, 2 ;open
+		mov rsi, 577 ;O_WRONLY | O_CREAT | O_TRUNC
+		mov rdx, 0755
+		syscall
+
+		;fd2
+		mov r15, rax
+
+		;dup2 demo->stdout
+		mov rax, 33 ;dup2
+		mov	rdi, r15
+		mov rsi, 1
+		syscall
+
+		;dup2 self->stdin
+		mov rax, 33 ;dup2
+		mov	rdi, r14
+		mov rsi, 0
+		syscall
+
+		push 0
+		push __gzip_a1
+		push __gzip
+
+		;execve
+		mov rax, 59 ;execve
+		mov	rdi, __gzip
+		mov	rsi, rsp
+		xor rdx, rdx ;empty environ
+		syscall
+
+		; align 16
 
 filesize	equ	 $ - $$
