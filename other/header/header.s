@@ -18,6 +18,7 @@ BITS 64
 ehdr:									; Elf64_Ehdr
 		db	0x7F, "ELF", 2, 1, 1, 0		; e_ident
 
+;hide this shit in the padding lmao
 __gzip_a1:
 		db '-d',0
 __demo:
@@ -68,9 +69,10 @@ _start:
 _parent:
 		;move pid into param1 for wait4 syscall
 		minimov rdi, rax
-		xor rsi, rsi ;null
-		xor rdx, rdx ;null
-		xor r10, r10 ;null
+		;these are initialized to zero on start
+		; xor rsi, rsi ;null
+		; xor rdx, rdx ;null
+		; xor r10, r10 ;null
 		minimov rax, sys_wait4
 		syscall
 
@@ -90,8 +92,9 @@ _child:
 		; open self 
 		minimov	rdi, __proc
 		minimov rax, sys_open ;open
-		xor rsi, rsi
-		xor rdx, rdx
+		;these are initialized to zero on start
+		; xor rsi, rsi
+		; xor rdx, rdx
 		syscall
 
 		;fd1
@@ -103,7 +106,8 @@ _child:
 		pop rdi
 		push rdi
 		minimov rsi, filesize
-		xor rdx, rdx
+		;these are initialized to zero on start
+		; xor rdx, rdx
 		syscall
 
 		; open demo 
@@ -140,6 +144,6 @@ _child:
 		xor rdx, rdx ;empty environ
 		syscall
 
-		; align 4
+		align 4
 
 filesize	equ	 $ - $$
