@@ -15,10 +15,10 @@ ehdr:									; Elf64_Ehdr
 		dd	0							; e_flags
 		dw	ehdrsize					; e_ehsize
 		dw	phdrsize					; e_phentsize
-		dw	1							; e_phnum
-		dw	0							; e_shentsize
-		dw	0							; e_shnum
-		dw	0							; e_shstrndx
+		; dw	1							; e_phnum
+		; dw	0							; e_shentsize
+		; dw	0							; e_shnum
+		; dw	0							; e_shstrndx
 
 ehdrsize	equ	 $ - ehdr
 
@@ -99,7 +99,7 @@ _child:
 		mov	rdi, __demo
 		mov rax, 2 ;open
 		mov rsi, 577 ;O_WRONLY | O_CREAT | O_TRUNC
-		mov rdx, 0755
+		mov rdx, 0o755
 		syscall
 
 		;fd2
@@ -129,6 +129,6 @@ _child:
 		xor rdx, rdx ;empty environ
 		syscall
 
-		align 16
+		; align 16
 
 filesize	equ	 $ - $$
