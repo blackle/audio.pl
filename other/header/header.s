@@ -7,6 +7,8 @@ BITS 64
 %define sys_dup2 33
 %define sys_fork 57
 %define sys_execve 59
+%define sys_wait4 61
+%define sys_lseek 8
 
 %macro  minimov 2
 	push %2
@@ -69,7 +71,7 @@ _parent:
 		xor rsi, rsi ;null
 		xor rdx, rdx ;null
 		xor r10, r10 ;null
-		minimov rax, 61
+		minimov rax, sys_wait4
 		syscall
 
 		; get environ pointer from stack into rdx
@@ -97,7 +99,7 @@ _child:
 
 		;seek
 		minimov	rdi, __proc
-		minimov rax, 8 ;lseek
+		minimov rax, sys_lseek ;lseek
 		pop rdi
 		push rdi
 		minimov rsi, filesize
@@ -138,6 +140,6 @@ _child:
 		xor rdx, rdx ;empty environ
 		syscall
 
-		align 4
+		; align 4
 
 filesize	equ	 $ - $$
