@@ -68,49 +68,55 @@ _parent:
 
 		; execve demo 
 		mov rax, 59 ;execve
-		mov	rdi, __demo
+			push __demo
+			pop	rdi
 		mov	rsi, rsp ;use our args as args
 		syscall
 
 _child:
 		; open self 
-		mov	rdi, __proc
+			push __proc
+			pop rdi
 		mov rax, 2 ;open
 		xor rsi, rsi
 		xor rdx, rdx
 		syscall
 
 		;fd1
-		mov r14, rax
+		push rax
 
 		;seek
-		mov	rdi, __proc
+			push __proc
+			pop	rdi
 		mov rax, 8 ;lseek
-		mov rdi, r14
+		pop rdi ;get seek fd
+		push rdi ;put it back on the stack
 		mov rsi, filesize
 		xor rdx, rdx
 		syscall
 
 		; open demo 
-		mov	rdi, __demo
+			push __demo
+			pop	rdi
+		pop	rdi
 		mov rax, 2 ;open
 		mov rsi, 0o1101 ;O_WRONLY | O_CREAT | O_TRUNC
 		mov rdx, 0o755
 		syscall
 
 		;fd2
-		mov r15, rax
+		push rax
 
 		;dup2 demo->stdout
 		mov rax, 33 ;dup2
-		mov	rdi, r15
+		pop	rdi
 		mov rsi, 1
 		syscall
 
 		;dup2 self->stdin
 		mov rax, 33 ;dup2
-		mov	rdi, r14
-		mov rsi, 0
+		pop	rdi
+		xor rsi,rsi ;0
 		syscall
 
 		;setup arguments to gzip
@@ -120,7 +126,8 @@ _child:
 
 		;execve
 		mov rax, 59 ;execve
-		mov	rdi, __gzip
+			push __gzip
+			pop	rdi;, __gzip
 		mov	rsi, rsp
 		xor rdx, rdx ;empty environ
 		syscall
