@@ -18,13 +18,12 @@ BITS 64
 ehdr:									; Elf64_Ehdr
 		db	0x7F, "ELF", 2, 1, 1, 0		; e_ident
 
-;hide this shit in the padding lmao
+;hide this shit in the padding lmao /tmp/-d
+__demo:
+		db '/tmp/'
 __gzip_a1:
 		db '-d',0
-__demo:
-		db '.x',0
 
-		times 2 db	0					; e_pad
 		dw	2							; e_type
 		dw	0x3e						; e_machine
 		dd	1							; e_version
