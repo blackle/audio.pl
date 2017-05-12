@@ -3,9 +3,14 @@ BITS 64
 
 		org	 0x00400000
 
+%define sys_open 2
+%define sys_dup2 33
+%define sys_fork 57
+%define sys_execve 59
+
 %macro  minimov 2
-        push    %2
-        pop 	%1
+	push %2
+	pop %1
 %endmacro
 
 ehdr:									; Elf64_Ehdr
@@ -52,7 +57,7 @@ __gzip:
 
 _start:
 		; fork 
-		minimov rax, 57
+		minimov rax, sys_fork
 		syscall
 
 		; move to child or parent
@@ -74,7 +79,7 @@ _parent:
 		add rdx,rsp
 
 		; execve demo 
-		minimov rax, 59 ;execve
+		minimov rax, sys_execve
 		minimov	rdi, __demo
 		minimov	rsi, rsp ;use our args as args
 		syscall
@@ -82,42 +87,43 @@ _parent:
 _child:
 		; open self 
 		minimov	rdi, __proc
-		minimov rax, 2 ;open
+		minimov rax, sys_open ;open
 		xor rsi, rsi
 		xor rdx, rdx
 		syscall
 
 		;fd1
-		minimov r14, rax
+		push rax
 
 		;seek
 		minimov	rdi, __proc
 		minimov rax, 8 ;lseek
-		minimov rdi, r14
+		pop rdi
+		push rdi
 		minimov rsi, filesize
 		xor rdx, rdx
 		syscall
 
 		; open demo 
 		minimov	rdi, __demo
-		minimov rax, 2 ;open
+		minimov rax, sys_open ;open
 		minimov rsi, 0o1101 ;O_WRONLY | O_CREAT | O_TRUNC
-		minimov rdx, 0o755
+		minimov rdx, 0o755 ; common permissions
 		syscall
 
 		;fd2
-		minimov r15, rax
+		push rax
 
 		;dup2 demo->stdout
-		minimov rax, 33 ;dup2
-		minimov	rdi, r15
-		minimov rsi, 1
+		minimov rax, sys_dup2
+		pop	rdi
+		minimov rsi, 1 ;1 = stdout
 		syscall
 
 		;dup2 self->stdin
-		minimov rax, 33 ;dup2
-		minimov	rdi, r14
-		minimov rsi, 0
+		minimov rax, sys_dup2
+		pop	rdi
+		xor rsi, rsi ;0 = stdin
 		syscall
 
 		;setup arguments to gzip
@@ -126,7 +132,7 @@ _child:
 		push __gzip
 
 		;execve
-		minimov rax, 59 ;execve
+		minimov rax, sys_execve
 		minimov	rdi, __gzip
 		minimov	rsi, rsp
 		xor rdx, rdx ;empty environ
