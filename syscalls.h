@@ -12,59 +12,6 @@
 
 #include <errno.h>
 
-#define SYS_ify(syscall_name)  (__NR_##syscall_name)
-
-#undef _syscall0
-#define _syscall0(type,name) \
-type name(void) \
-{ \
-return (type) (INLINE_SYSCALL(name, 0)); \
-}
-
-#undef _syscall1
-#define _syscall1(type,name,type1,arg1) \
-type name(type1 arg1) \
-{ \
-return (type) (INLINE_SYSCALL(name, 1, arg1)); \
-}
-
-#undef _syscall2
-#define _syscall2(type,name,type1,arg1,type2,arg2) \
-type name(type1 arg1,type2 arg2) \
-{ \
-return (type) (INLINE_SYSCALL(name, 2, arg1, arg2)); \
-}
-
-#undef _syscall3
-#define _syscall3(type,name,type1,arg1,type2,arg2,type3,arg3) \
-type name(type1 arg1,type2 arg2,type3 arg3) \
-{ \
-return (type) (INLINE_SYSCALL(name, 3, arg1, arg2, arg3)); \
-}
-
-#undef _syscall4
-#define _syscall4(type,name,type1,arg1,type2,arg2,type3,arg3,type4,arg4) \
-type name (type1 arg1, type2 arg2, type3 arg3, type4 arg4) \
-{ \
-return (type) (INLINE_SYSCALL(name, 4, arg1, arg2, arg3, arg4)); \
-} 
-
-#undef _syscall5
-#define _syscall5(type,name,type1,arg1,type2,arg2,type3,arg3,type4,arg4, \
-	  type5,arg5) \
-type name (type1 arg1,type2 arg2,type3 arg3,type4 arg4,type5 arg5) \
-{ \
-return (type) (INLINE_SYSCALL(name, 5, arg1, arg2, arg3, arg4, arg5)); \
-}
-
-#undef _syscall6
-#define _syscall6(type,name,type1,arg1,type2,arg2,type3,arg3,type4,arg4, \
-	  type5,arg5,type6,arg6) \
-type name (type1 arg1,type2 arg2,type3 arg3,type4 arg4,type5 arg5,type6 arg6) \
-{ \
-return (type) (INLINE_SYSCALL(name, 6, arg1, arg2, arg3, arg4, arg5, arg6)); \
-}
-
 /* The Linux/x86-64 kernel expects the system call parameters in
    registers according to the following table:
 
