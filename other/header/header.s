@@ -98,7 +98,7 @@ _child:
 		; open demo 
 		mov	rdi, __demo
 		mov rax, 2 ;open
-		mov rsi, 577 ;O_WRONLY | O_CREAT | O_TRUNC
+		mov rsi, 0o1101 ;O_WRONLY | O_CREAT | O_TRUNC
 		mov rdx, 0o755
 		syscall
 
