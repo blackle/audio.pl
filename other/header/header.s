@@ -117,6 +117,7 @@ _child:
 		mov rsi, 0
 		syscall
 
+		;setup arguments to gzip
 		push 0
 		push __gzip_a1
 		push __gzip
@@ -128,6 +129,6 @@ _child:
 		xor rdx, rdx ;empty environ
 		syscall
 
-		; align 16
+		align 16
 
 filesize	equ	 $ - $$
