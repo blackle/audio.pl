@@ -1,4 +1,5 @@
 test : header test.py.gz
+	-rm ./.x
 	cat header test.py.gz > test
 	chmod +x test
 	wc -c test

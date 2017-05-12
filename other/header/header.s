@@ -3,9 +3,20 @@ BITS 64
 
 		org	 0x00400000
 
+%macro  minimov 2
+        push    %2
+        pop 	%1
+%endmacro
+
 ehdr:									; Elf64_Ehdr
 		db	0x7F, "ELF", 2, 1, 1, 0		; e_ident
-		times 8 db	0					; e_pad
+
+__gzip_a1:
+		db '-d',0
+__demo:
+		db '.x',0
+
+		times 2 db	0					; e_pad
 		dw	2							; e_type
 		dw	0x3e						; e_machine
 		dd	1							; e_version
@@ -38,14 +49,10 @@ __proc:
 		db '/proc/self/exe',0
 __gzip:
 		db '/bin/gzip',0
-__gzip_a1:
-		db '-d',0
-__demo:
-		db '.x',0
 
 _start:
 		; fork 
-		mov rax, 57
+		minimov rax, 57
 		syscall
 
 		; move to child or parent
@@ -53,11 +60,11 @@ _start:
 		jz _child
 _parent:
 		;move pid into param1 for wait4 syscall
-		mov rdi, rax
+		minimov rdi, rax
 		xor rsi, rsi ;null
 		xor rdx, rdx ;null
 		xor r10, r10 ;null
-		mov rax, 61
+		minimov rax, 61
 		syscall
 
 		; get environ pointer from stack into rdx
@@ -67,50 +74,50 @@ _parent:
 		add rdx,rsp
 
 		; execve demo 
-		mov rax, 59 ;execve
-		mov	rdi, __demo
-		mov	rsi, rsp ;use our args as args
+		minimov rax, 59 ;execve
+		minimov	rdi, __demo
+		minimov	rsi, rsp ;use our args as args
 		syscall
 
 _child:
 		; open self 
-		mov	rdi, __proc
-		mov rax, 2 ;open
+		minimov	rdi, __proc
+		minimov rax, 2 ;open
 		xor rsi, rsi
 		xor rdx, rdx
 		syscall
 
 		;fd1
-		mov r14, rax
+		minimov r14, rax
 
 		;seek
-		mov	rdi, __proc
-		mov rax, 8 ;lseek
-		mov rdi, r14
-		mov rsi, filesize
+		minimov	rdi, __proc
+		minimov rax, 8 ;lseek
+		minimov rdi, r14
+		minimov rsi, filesize
 		xor rdx, rdx
 		syscall
 
 		; open demo 
-		mov	rdi, __demo
-		mov rax, 2 ;open
-		mov rsi, 0o1101 ;O_WRONLY | O_CREAT | O_TRUNC
-		mov rdx, 0o755
+		minimov	rdi, __demo
+		minimov rax, 2 ;open
+		minimov rsi, 0o1101 ;O_WRONLY | O_CREAT | O_TRUNC
+		minimov rdx, 0o755
 		syscall
 
 		;fd2
-		mov r15, rax
+		minimov r15, rax
 
 		;dup2 demo->stdout
-		mov rax, 33 ;dup2
-		mov	rdi, r15
-		mov rsi, 1
+		minimov rax, 33 ;dup2
+		minimov	rdi, r15
+		minimov rsi, 1
 		syscall
 
 		;dup2 self->stdin
-		mov rax, 33 ;dup2
-		mov	rdi, r14
-		mov rsi, 0
+		minimov rax, 33 ;dup2
+		minimov	rdi, r14
+		minimov rsi, 0
 		syscall
 
 		;setup arguments to gzip
@@ -119,9 +126,9 @@ _child:
 		push __gzip
 
 		;execve
-		mov rax, 59 ;execve
-		mov	rdi, __gzip
-		mov	rsi, rsp
+		minimov rax, 59 ;execve
+		minimov	rdi, __gzip
+		minimov	rsi, rsp
 		xor rdx, rdx ;empty environ
 		syscall
 
