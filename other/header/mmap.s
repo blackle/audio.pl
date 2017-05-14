@@ -5,6 +5,9 @@ BITS 64
 
 %include "syscalls.s"
 
+%define mapsize 1024
+
+;2 bytes smaller than mov!
 %macro  minimov 2
 	push %2
 	pop %1
@@ -51,8 +54,6 @@ __proc:
 		db '/proc/self/exe',0
 __gzip:
 		db '/bin/gzip',0
-__python:
-		db '/usr/bin/python2.7',0
 
 _start:
 		;replace with add rsp,#?
@@ -70,31 +71,46 @@ _start:
 		test rax,rax
 		jz _child
 _parent:
-		;dup2 the read end
-		;thank god it only reads the bottom 4 bytes
-		minimov rax, sys_dup2
-		pop	rdi
-		; xor rsi, rsi ;0 = stdin
-		syscall
 
 		;close the write end
 		minimov rax, sys_close
+		pop	rdi
+		push	rdi
 		shr rdi, 32
 		syscall
+		pop rdi
 
-		; get environ pointer from stack into rdx
-		pop rdx ;argc
-		inc rdx ;argc + 1
-		shl rdx, 3 ; (argc+1)*8
-		add rdx,rsp
-
-		push 0
-
-		; execve demo 
-		minimov rax, sys_execve
-		minimov	rdi, __python
-		minimov	rsi, rsp ;use our args as args
+		;mmap an executable area to decompress into
+		minimov rax, sys_mmap
+		; xor rdi,rdi ;addr
+		minimov	rsi, mapsize ;length
+		minimov rdx, 7 ; rwx
+		minimov	r10, 0x22 ;MAP_ANONYMOUS | MAP_PRIVATE
+		; minimov	r8, 0 ;fd
+		; minimov	r9, 0 ;offset
 		syscall
+
+		;remember that mapping, buckaroo
+		push rax
+		minimov rsi, rax
+
+__read_loop:
+		;read from gzip into mapping
+		minimov rax, sys_read
+		; xor rdi,rdi ;fd = 0
+		; minimov rsi, r15
+		minimov rdx, mapsize
+		syscall
+
+		add rsi, rax
+
+		; keep reading until rax = 0
+		test rax,rax
+		jnz __read_loop
+
+		; jump to mapping
+		pop rax
+		jmp rax
 
 _child:
 		; open self 
@@ -120,13 +136,13 @@ _child:
 		xor rsi, rsi ;0 = stdin
 		syscall
 
-		;close write end
+		;close read end
 		; minimov rax, sys_close
-		pop	rdi
 		; syscall
 
 		;dup2 pipe->stdout
 		minimov rax, sys_dup2
+		pop	rdi
 		shr rdi, 32
 		inc rsi ;1 = stdin
 		syscall
@@ -143,6 +159,6 @@ _child:
 		; xor rdx, rdx ;empty environ
 		syscall
 
-		align 4
+		; align 4
 
 filesize	equ	 $ - $$
