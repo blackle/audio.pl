@@ -12,3 +12,8 @@ header : header.s Makefile
 	nasm -f bin -o header header.s -l annotated.list
 	chmod +x header
 	wc -c header
+
+python : python.s Makefile
+	nasm -f bin -o python python.s -l annotated.list
+	chmod +x python
+	wc -c python
