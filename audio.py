@@ -89,8 +89,8 @@ def genbuf(buf, bufsize):
 				# buf[tk+i] += rando*0.1*sin(i*p2m(600))
 				# buf[tk+i] += rando*0.1*sin(i*p2m(1200))
 				scale = (1.0*i)/tl_len
-				weight = pow(scale, 2) - pow(scale,3)
-				buf[tk+i] += weight*rando*sin(i*p2m(1200))
+				weight = (pow(scale, 2) - pow(scale,3))/0.25
+				buf[tk+i] += weight*rando*sin(i*p2m(1000))
 
 			rand = log(1-random.uniform(0, 1))/lamb
 			tk -= rand
