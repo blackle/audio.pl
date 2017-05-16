@@ -61,19 +61,42 @@ def gensample():
 	# outsample /= 10.0
 	return newsample
 
+def genbuf(buf, bufsize):
+	lamb = 0.1
+	tl_len = 300
+	std = sqrt(1.0/(tl_len*lamb))
+	print std
+	try:
+		tk = 0
+		while True:
+			rando = random.choice([-std,std])
+			for i in range(0, tl_len):
+				# buf[tk+i] += rando*0.1*sin(i*p2m(300))
+				# buf[tk+i] += rando*0.1*sin(i*p2m(600))
+				# buf[tk+i] += rando*0.1*sin(i*p2m(1200))
+				scale = (1.0*i)/tl_len
+				weight = pow(scale, 2) - pow(scale,3)
+				buf[tk+i] += weight*rando*sin(i*p2m(1200))
+
+			rand = log(1-random.uniform(0, 1))/lamb
+			tk -= rand
+			tk = int(tk)
+			# print tk
+	except:
+		return
+
 def main():
 	read, write = px.pipe()
 	pid = px.fork()
 	if (pid != 0):
 		px.close(read)
 
-		bufsize = 1024
-		buf = array.array('f', [0]*bufsize)
+		bufsize = 1024*32
 
 		while 1:
 			try:
-				for i in xrange(0,bufsize):
-					buf[i] = gensample()
+				buf = array.array('f', [0]*bufsize)
+				genbuf(buf, bufsize)
 				px.write(write, buf.tostring())
 			except KeyboardInterrupt:
 				exit(0)
