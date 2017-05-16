@@ -18,7 +18,7 @@ def sec2samp(sec):
 def samp2sec(time):
 	return (1.0*time)/rate
 
-samplelength = int(sec2samp(0.05))+1
+samplelength = int(sec2samp(0.005))+1
 samples = [0]*samplelength
 
 class Rosenberg:
@@ -48,18 +48,32 @@ class Rosenberg:
 
 rosen = Rosenberg(0.007, 100, 2.0, 3.0, 60.0)
 
+def convolve(samples, samplelength):
+	# return samples[0]
+	mysum = 0.0
+	mymax = 0.0
+	for i in xrange(0, samplelength, 4):
+		sec = samp2sec(i)*1+0.001
+		mult = sin(sec*1)/sec
+		# print max(0.0,1.0-sec)
+		mysum += samples[i] * mult
+		mymax += mult
+
+	return mysum/mymax
+
 def gensample():
 	global samples
+	global samplelength
 	global rosen
 	newsample = rosen.step()
-	# samples.pop()
-	# samples.insert(0,newsample)
+	samples.pop()
+	samples.insert(0,newsample)
 
 	# outsample = 0
 	# for x in xrange(0, 100):
 	# 	outsample += samples[x]
 	# outsample /= 10.0
-	return newsample
+	return convolve(samples, samplelength)*10
 
 def genbuf(buf, bufsize):
 	lamb = 0.1

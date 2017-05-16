@@ -3,12 +3,7 @@ BITS 64
 
 		org	 0x00400000
 
-%define sys_open 2
-%define sys_dup2 33
-%define sys_fork 57
-%define sys_execve 59
-%define sys_wait4 61
-%define sys_lseek 8
+%include "syscalls.s"
 
 %macro  minimov 2
 	push %2
@@ -19,8 +14,8 @@ ehdr:									; Elf64_Ehdr
 		db	0x7F, "ELF", 2, 1, 1, 0		; e_ident
 
 ;hide this shit in the padding lmao
-__demo:
-		db '/tmp/'
+__padding:
+		times 5 db 0
 __gzip_a1:
 		db '-d',0
 
@@ -56,8 +51,17 @@ __proc:
 		db '/proc/self/exe',0
 __gzip:
 		db '/bin/gzip',0
+__python:
+		db '/usr/bin/python2.7',0
 
 _start:
+		;replace with add rsp,#?
+		push rax
+		; pipe with fds on stack
+		minimov rax, sys_pipe
+		minimov rdi, rsp
+		syscall
+
 		; fork 
 		minimov rax, sys_fork
 		syscall
@@ -66,13 +70,16 @@ _start:
 		test rax,rax
 		jz _child
 _parent:
-		;move pid into param1 for wait4 syscall
-		minimov rdi, rax
-		;these are initialized to zero on start
-		; xor rsi, rsi ;null
-		; xor rdx, rdx ;null
-		; xor r10, r10 ;null
-		minimov rax, sys_wait4
+		;dup2 the read end
+		;thank god it only reads the bottom 4 bytes
+		minimov rax, sys_dup2
+		pop	rdi
+		; xor rsi, rsi ;0 = stdin
+		syscall
+
+		;close the write end
+		minimov rax, sys_close
+		shr rdi, 32
 		syscall
 
 		; get environ pointer from stack into rdx
@@ -81,9 +88,11 @@ _parent:
 		shl rdx, 3 ; (argc+1)*8
 		add rdx,rsp
 
+		push 0
+
 		; execve demo 
 		minimov rax, sys_execve
-		minimov	rdi, __demo
+		minimov	rdi, __python
 		minimov	rsi, rsp ;use our args as args
 		syscall
 
@@ -91,43 +100,35 @@ _child:
 		; open self 
 		minimov	rdi, __proc
 		minimov rax, sys_open ;open
-		;these are initialized to zero on start
 		; xor rsi, rsi
 		; xor rdx, rdx
 		syscall
 
 		;fd1
-		push rax
+		minimov rdi, rax
 
 		;seek
 		minimov rax, sys_lseek ;lseek
-		pop rdi
-		push rdi
+		; push rdi ;was set
 		minimov rsi, filesize
-		;these are initialized to zero on start
 		; xor rdx, rdx
-		syscall
-
-		; open demo 
-		minimov	rdi, __demo
-		minimov rax, sys_open ;open
-		minimov rsi, 0o1101 ;O_WRONLY | O_CREAT | O_TRUNC
-		minimov rdx, 0o755 ; common permissions
-		syscall
-
-		;fd2
-		push rax
-
-		;dup2 demo->stdout
-		minimov rax, sys_dup2
-		pop	rdi
-		minimov rsi, 1 ;1 = stdout
 		syscall
 
 		;dup2 self->stdin
 		minimov rax, sys_dup2
-		pop	rdi
+		; pop	rdi ;was set
 		xor rsi, rsi ;0 = stdin
+		syscall
+
+		;close write end
+		; minimov rax, sys_close
+		pop	rdi
+		; syscall
+
+		;dup2 pipe->stdout
+		minimov rax, sys_dup2
+		shr rdi, 32
+		inc rsi ;1 = stdin
 		syscall
 
 		;setup arguments to gzip
@@ -139,7 +140,7 @@ _child:
 		minimov rax, sys_execve
 		minimov	rdi, __gzip
 		minimov	rsi, rsp
-		xor rdx, rdx ;empty environ
+		; xor rdx, rdx ;empty environ
 		syscall
 
 		align 4
