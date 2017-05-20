@@ -112,13 +112,19 @@ __sampleloop:
 		xor r13, r14
 		xor r15, r13
 		ror r15, 8
-		shr r13, 2
+		shr r13, 1
 
-		cmp r14, 1024*10
+		cmp r14, 1024
+		ja __no_noise
+		not r15
+
+__no_noise:
+
+		cmp r14, 1024*8
 		jnz __sampleloop
 
 		minimov rsi, rsp
-		minimov rdx, 1024*10*8
+		minimov rdx, 1024*8*8
 
 __writeloop:
 		;write some stuff
