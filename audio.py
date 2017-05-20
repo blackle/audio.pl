@@ -76,21 +76,35 @@ def gensample():
 	return convolve(samples, samplelength)*10
 
 def genbuf(buf, bufsize):
+	for i in xrange(0, bufsize):
+		buf[i] = 0.0
 	lamb = 0.1
 	tl_len = 300
+	tbuff = []
 	std = sqrt(1.0/(tl_len*lamb))
-	print std
+	
+	for i in range(0, tl_len):
+		scale = (1.0*i)/tl_len
+		weight = (1.0-cos(scale*2*pi))
+		result = weight*sin(i*p2m(400))*0.2
+		tbuff.append(result)
+
+	if True:
+		pulselen = 2500
+		echolen = 5
+		for off in xrange(0, echolen):
+			scale2 = pow(1-(off*1.0)/echolen,3)
+			for i in xrange(0,pulselen):
+				scale = pow((1.0*i)/pulselen,2)
+				weight = (1.0-cos(scale*2*pi))
+				buf[off*pulselen*8+i] += scale2*weight*sin(i*p2m(1058))/4.0
+
 	try:
 		tk = 0
-		while True:
+		while tk+tl_len < bufsize:
 			rando = random.choice([-std,std])
 			for i in range(0, tl_len):
-				# buf[tk+i] += rando*0.1*sin(i*p2m(300))
-				# buf[tk+i] += rando*0.1*sin(i*p2m(600))
-				# buf[tk+i] += rando*0.1*sin(i*p2m(1200))
-				scale = (1.0*i)/tl_len
-				weight = (pow(scale, 2) - pow(scale,3))/0.25
-				buf[tk+i] += weight*rando*sin(i*p2m(1000))
+				buf[tk+i] += tbuff[i]*rando
 
 			rand = log(1-random.uniform(0, 1))/lamb
 			tk -= rand
@@ -105,11 +119,11 @@ def main():
 	if (pid != 0):
 		px.close(read)
 
-		bufsize = 1024*32
+		bufsize = 1024*64*2
+		buf = array.array('f', [0]*bufsize)
 
 		while 1:
 			try:
-				buf = array.array('f', [0]*bufsize)
 				genbuf(buf, bufsize)
 				px.write(write, buf.tostring())
 			except KeyboardInterrupt:

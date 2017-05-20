@@ -10,6 +10,7 @@ mmap : mmap.s payload.gz Makefile
 
 payload.gz : payload
 	cat payload | gzip -9 -c > payload.gz
+	# truncate -s "-4" payload.gz
 	wc -c payload.gz
 
 payload : payload.s Makefile
@@ -25,7 +26,7 @@ test : mmap test.py.gz
 
 test.py.gz : test.py Makefile
 	cat test.py | gzip -9 -c > test.py.gz
-	# truncate -s "-4" test.py.gz
+	truncate -s "-4" test.py.gz
 	wc -c test.py.gz
 
 header : header.s Makefile

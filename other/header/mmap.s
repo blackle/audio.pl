@@ -5,7 +5,7 @@ BITS 64
 
 %include "syscalls.s"
 
-%define mapsize 1024
+%define mapsize 4096
 
 ;2 bytes smaller than mov!
 %macro  minimov 2
@@ -44,8 +44,8 @@ phdr:									; Elf64_Phdr
 		dq	0							; p_offset
 		dq	$$							; p_vaddr
 		dq	$$							; p_paddr
-		dq	filesize					; p_filesz
-		dq	filesize					; p_memsz
+		dq	filesize*2					; p_filesz
+		dq	filesize*2					; p_memsz
 		dq	0x10						; p_align
 
 phdrsize	equ	 $ - phdr
@@ -91,26 +91,27 @@ _parent:
 		syscall
 
 		;remember that mapping, buckaroo
-		push rax
+		; push rax
 		minimov rsi, rax
 
 __read_loop:
 		;read from gzip into mapping
-		minimov rax, sys_read
+		xor rax, rax
+		; minimov rax, sys_read
 		; xor rdi,rdi ;fd = 0
 		; minimov rsi, r15
 		minimov rdx, mapsize
 		syscall
 
-		add rsi, rax
+		; add rsi, rax
 
 		; keep reading until rax = 0
-		test rax,rax
-		jnz __read_loop
+		; test rax,rax
+		; jnz __read_loop
 
 		; jump to mapping
-		pop rax
-		jmp rax
+		; pop r15
+		jmp rsi
 
 _child:
 		; open self 
@@ -144,7 +145,7 @@ _child:
 		minimov rax, sys_dup2
 		pop	rdi
 		shr rdi, 32
-		inc rsi ;1 = stdin
+		inc rsi ;1 = stdout
 		syscall
 
 		;setup arguments to gzip
@@ -161,4 +162,5 @@ _child:
 
 		; align 4
 
+__end_of_file
 filesize	equ	 $ - $$
