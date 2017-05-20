@@ -44,8 +44,9 @@ phdr:									; Elf64_Phdr
 		dq	0							; p_offset
 		dq	$$							; p_vaddr
 		dq	$$							; p_paddr
-		dq	filesize*2					; p_filesz
-		dq	filesize*2					; p_memsz
+bigfilesize equ 4096*2
+		dq	bigfilesize					; p_filesz
+		dq	bigfilesize					; p_memsz
 		dq	0x10						; p_align
 
 phdrsize	equ	 $ - phdr
@@ -56,6 +57,10 @@ __gzip:
 		db '/bin/gzip',0
 
 _start:
+		minimov rax, sys_close
+		minimov rdi, 2
+		syscall
+
 		;replace with add rsp,#?
 		push rax
 		; pipe with fds on stack
@@ -111,7 +116,7 @@ __read_loop:
 
 		; jump to mapping
 		; pop r15
-		jmp rsi
+		jmp __end_of_file
 
 _child:
 		; open self 
@@ -162,5 +167,5 @@ _child:
 
 		; align 4
 
-__end_of_file
+__end_of_file:
 filesize	equ	 $ - $$

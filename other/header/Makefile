@@ -10,7 +10,7 @@ mmap : mmap.s payload.gz Makefile
 
 payload.gz : payload
 	cat payload | gzip -9 -c > payload.gz
-	# truncate -s "-4" payload.gz
+	truncate -s "-8" payload.gz
 	wc -c payload.gz
 
 payload : payload.s Makefile
