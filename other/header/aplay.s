@@ -109,16 +109,25 @@ __sampleloop:
 		inc r14
 		
 		push r15
-		xor r13, r14
-		xor r15, r13
-		ror r15, 8
-		shr r13, 2
 
-		cmp r14, 1024*10
+		xor r12, r14
+		not r12
+
+		xor r13, r14
+		; not r13
+
+		and r15, r13
+		and r15, r12
+		not r15
+
+		rol r13, 1
+		ror r12, 1
+
+		cmp r14, 1024*16
 		jnz __sampleloop
 
 		minimov rsi, rsp
-		minimov rdx, 1024*10*8
+		minimov rdx, 1024*16*8
 
 __writeloop:
 		;write some stuff
