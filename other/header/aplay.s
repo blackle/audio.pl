@@ -5,8 +5,6 @@ BITS 64
 
 %include "syscalls.s"
 
-%define mapsize 4096
-
 ;2 bytes smaller than mov!
 %macro  minimov 2
 	push %2
@@ -21,7 +19,7 @@ __padding:
 __aplay_a1:
 		db '-r',0
 __aplay_a2:
-		db '5500',0
+		db '5050',0
 
 		dw	2							; e_type
 		dw	0x3e						; e_machine
@@ -46,11 +44,19 @@ phdr:									; Elf64_Phdr
 		dq	$$							; p_vaddr
 		dq	$$							; p_paddr
 bigfilesize equ 800
-		dq	bigfilesize*2					; p_filesz
-		dq	bigfilesize*2					; p_memsz
+		dq	filesize					; p_filesz
+		dq	filesize					; p_memsz
 		dq	0x10						; p_align
 
 phdrsize	equ	 $ - phdr
+
+;padding
+db 0
+; db 0
+; db 0
+; db 0
+; db 0
+	; anything can go here
 
 _start:
 		;close stderr
@@ -67,38 +73,41 @@ _start:
 		; fork 
 		minimov rax, sys_fork
 		syscall
+		pop	rdi
 		test rax,rax
-		jz __child
-		; jmp __child
+		jz __parent
+		jmp __child
 
 __parent:
 		;get pipe write fd
-		pop	rdi
 		shr rdi, 32
 
+		minimov rsi, __end_of_file
+		minimov rdx, datasize^0x10
+__loaddata:
+		xor rdx,0x10
+		xor rsi,0x8
+
 __genloop:
+		dec r15b
 
 		;write some stuff
 		minimov rax, sys_write
-		minimov rsi, ehdr
-		minimov rdx, bigfilesize
-		syscall
-		minimov rax, sys_write
-		syscall
-		minimov rsi, __end_of_file
-		minimov rax, sys_write
-		syscall
-		minimov rax, sys_write
 		syscall
 
-		jmp __genloop
+		test r15b, r15b
+		jnz __genloop
+		jmp __loaddata
 
+		; minimov rax, sys_exit
+		; syscall
+		;anything can go here
 
 __child:
 		;dup2 read->stdin
 		minimov rax, sys_dup2
-		pop	rdi
-		xor rsi,rsi
+		; pop	rdi
+		; xor rsi,rsi
 		syscall
 
 		;close the write end
@@ -124,8 +133,18 @@ __child:
 		minimov	rsi, rsp
 		syscall
 
+	; anything can go here
+
 __aplay:
-		db '/usr/bin/aplay';there should be a null terminator here, but I eated it
+		db '/usr/bin/aplay'
+
+__data:
+	times 4 db 0, 255
 
 __end_of_file:
-filesize	equ	 $ - $$
+
+datasize	equ	$ - __data
+filesize	equ	$ - $$
+
+;for exactly 256 bytes!
+db 0
