@@ -73,9 +73,10 @@ __child:
 		syscall
 
 		;close the write end
-		minimov rax, sys_close
-		shr rdi, 32
-		syscall
+		; apparently we don't need this as parent?
+		; minimov rax, sys_close
+		; shr rdi, 32
+		; syscall
 
 		;assume argc = 1
 		; envp -> rdx
@@ -101,8 +102,8 @@ __parent:
 		;get pipe write fd
 		shr rdi, 32
 
-		; mov r15, 0xff00ff00ff00ff00
-
+		xor r15, r15
+		xor r13, r13
 __reset:
 		xor r14, r14
 __sampleloop:
@@ -136,7 +137,7 @@ __writeloop:
 		jmp __reset
 
 __aplay:
-		db '/usr/bin/aplay'
+		db '/usr/bin/aplay',0,0 ;<-- these last two could be removed
 
 __end_of_file:
 
