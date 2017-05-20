@@ -16,10 +16,7 @@ ehdr:									; Elf64_Ehdr
 
 ;hide this shit in the padding lmao
 __padding:
-__aplay_a1:
-		db '-r',0
-__aplay_a2:
-		db '5050',0
+		db 'blackle',0
 
 		dw	2							; e_type
 		dw	0x3e						; e_machine
@@ -43,15 +40,11 @@ phdr:									; Elf64_Phdr
 		dq	0							; p_offset
 		dq	$$							; p_vaddr
 		dq	$$							; p_paddr
-bigfilesize equ 800
 		dq	filesize					; p_filesz
 		dq	filesize					; p_memsz
 		dq	0x10						; p_align
 
 phdrsize	equ	 $ - phdr
-
-;padding
-db 0
 
 _start:
 		;close stderr
@@ -71,34 +64,6 @@ _start:
 		pop	rdi
 		test rax,rax
 		jz __parent
-		jmp __child
-
-__parent:
-		;get pipe write fd
-		shr rdi, 32
-
-		minimov rsi, __end_of_file
-		minimov rdx, datasize^0x10
-__loaddata:
-		;use the magic of xor to toggle long or short pulse
-		xor rdx,0x10
-
-		;use the magic of xor to pull us back/fwd 8 bytes
-		xor rsi,0x8
-
-__genloop:
-		dec r15b
-
-		;write some stuff
-		minimov rax, sys_write
-		syscall
-
-		test r15b, r15b
-		jz __loaddata
-		jmp __genloop
-
-		; minimov rax, sys_exit
-		; syscall
 
 __child:
 		;dup2 read->stdin
@@ -112,16 +77,16 @@ __child:
 		shr rdi, 32
 		syscall
 
+		;assume argc = 1
 		; envp -> rdx
-		pop rdx ;argc
-		inc rdx ;argc + 1
-		shl rdx, 3 ; (argc+1)*8
+		; pop rdx ;argc
+		; inc rdx ;argc + 1
+		; shl rdx, 3 ; (argc+1)*8
+		minimov rdx, 16
 		add rdx,rsp
 
 		;setup argv
 		push 0
-		push __aplay_a2
-		push __aplay_a1
 		push __aplay
 
 		; call aplay
@@ -132,16 +97,41 @@ __child:
 
 	; anything can go here
 
+__parent:
+		;get pipe write fd
+		shr rdi, 32
+
+		; mov r15, 0xff00ff00ff00ff00
+
+__reset:
+		xor r14, r14
+__sampleloop:
+		inc r14
+		
+		push r15
+		xor r13, r14
+		xor r15, r13
+		ror r15, 8
+		shr r13, 1
+
+		cmp r14, 1024*10
+		jnz __sampleloop
+
+		minimov rsi, rsp
+		minimov rdx, 1024*10*8
+
+__writeloop:
+		;write some stuff
+		minimov rax, sys_write
+		; minimov rdi, 1
+		syscall
+
+		sub rsp, rdx
+		jmp __reset
+
 __aplay:
 		db '/usr/bin/aplay'
 
-__data:
-	times 4 db 0, 255
-
 __end_of_file:
 
-datasize	equ	$ - __data
 filesize	equ	$ - $$
-
-;for exactly 256 bytes!
-db 0
