@@ -125,7 +125,7 @@ __child:
 		syscall
 
 __aplay:
-		db '/usr/bin/aplay'
+		db '/usr/bin/aplay';there should be a null terminator here, but I eated it
 
 __end_of_file:
 filesize	equ	 $ - $$
