@@ -80,19 +80,19 @@ _parent:
 		syscall
 		pop rdi
 
-		;mmap an executable area to decompress into
-		minimov rax, sys_mmap
-		; xor rdi,rdi ;addr
-		minimov	rsi, mapsize ;length
-		minimov rdx, 7 ; rwx
-		minimov	r10, 0x22 ;MAP_ANONYMOUS | MAP_PRIVATE
-		; minimov	r8, 0 ;fd
-		; minimov	r9, 0 ;offset
-		syscall
+		; ;mmap an executable area to decompress into
+		; minimov rax, sys_mmap
+		; ; xor rdi,rdi ;addr
+		; minimov	rsi, mapsize ;length
+		; minimov rdx, 7 ; rwx
+		; minimov	r10, 0x22 ;MAP_ANONYMOUS | MAP_PRIVATE
+		; ; minimov	r8, 0 ;fd
+		; ; minimov	r9, 0 ;offset
+		; syscall
 
 		;remember that mapping, buckaroo
 		; push rax
-		minimov rsi, rax
+		minimov rsi, __end_of_file
 
 __read_loop:
 		;read from gzip into mapping
