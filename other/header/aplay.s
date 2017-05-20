@@ -21,7 +21,7 @@ __padding:
 __aplay_a1:
 		db '-r',0
 __aplay_a2:
-		db '4500',0
+		db '5500',0
 
 		dw	2							; e_type
 		dw	0x3e						; e_machine
@@ -45,7 +45,7 @@ phdr:									; Elf64_Phdr
 		dq	0							; p_offset
 		dq	$$							; p_vaddr
 		dq	$$							; p_paddr
-bigfilesize equ 1000
+bigfilesize equ 800
 		dq	bigfilesize*2					; p_filesz
 		dq	bigfilesize*2					; p_memsz
 		dq	0x10						; p_align
