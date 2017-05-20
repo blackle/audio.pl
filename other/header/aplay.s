@@ -52,11 +52,6 @@ phdrsize	equ	 $ - phdr
 
 ;padding
 db 0
-; db 0
-; db 0
-; db 0
-; db 0
-	; anything can go here
 
 _start:
 		;close stderr
@@ -85,7 +80,10 @@ __parent:
 		minimov rsi, __end_of_file
 		minimov rdx, datasize^0x10
 __loaddata:
+		;use the magic of xor to toggle long or short pulse
 		xor rdx,0x10
+
+		;use the magic of xor to pull us back/fwd 8 bytes
 		xor rsi,0x8
 
 __genloop:
@@ -96,12 +94,11 @@ __genloop:
 		syscall
 
 		test r15b, r15b
-		jnz __genloop
-		jmp __loaddata
+		jz __loaddata
+		jmp __genloop
 
 		; minimov rax, sys_exit
 		; syscall
-		;anything can go here
 
 __child:
 		;dup2 read->stdin
