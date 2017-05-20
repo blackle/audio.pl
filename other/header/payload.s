@@ -51,8 +51,8 @@ __genloop:
 		minimov rax, sys_write
 		minimov rdi, r13
 		; push rdi
-		minimov rsi, __buffer
-		minimov rdx, bufsize_bytes
+		minimov rsi, __aplay
+		minimov rdx, 62
 		syscall
 		minimov rax, sys_write
 		syscall
@@ -78,9 +78,9 @@ __child:
 		syscall
 
 		;close stdout
-		minimov rax, sys_close
-		minimov rdi, 2
-		syscall
+		; minimov rax, sys_close
+		; minimov rdi, 2
+		; syscall
 
 		; envp -> rdx
 		pop rdx ;argc

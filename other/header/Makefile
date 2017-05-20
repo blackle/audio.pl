@@ -39,3 +39,7 @@ python : python.s Makefile
 	chmod +x python
 	wc -c python
 
+aplay : aplay.s Makefile
+	nasm -f bin -o aplay aplay.s -l aplay.list
+	chmod +x aplay
+	wc -c aplay
