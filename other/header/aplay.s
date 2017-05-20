@@ -112,7 +112,7 @@ __sampleloop:
 		xor r13, r14
 		xor r15, r13
 		ror r15, 8
-		shr r13, 1
+		shr r13, 2
 
 		cmp r14, 1024*10
 		jnz __sampleloop
