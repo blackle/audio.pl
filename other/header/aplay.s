@@ -16,12 +16,14 @@ ehdr:									; Elf64_Ehdr
 
 ;hide this shit in the padding lmao
 __padding:
-		db 'blackle',0
+		minimov rax, sys_close
+		minimov rdi, 2
+		jmp _start
 
 		dw	2							; e_type
 		dw	0x3e						; e_machine
 		dd	1							; e_version
-		dq	_start						; e_entry
+		dq	__padding						; e_entry
 		dq	phdr - $$					; e_phoff
 		dq	0							; e_shoff
 		dd	0							; e_flags
@@ -47,9 +49,6 @@ phdr:									; Elf64_Phdr
 phdrsize	equ	 $ - phdr
 
 _start:
-		;close stderr
-		minimov rax, sys_close
-		minimov rdi, 2
 		syscall
 
 		push rax
@@ -111,15 +110,18 @@ __sampleloop:
 		
 		push r15
 		xor r13, r14
-		xor r15, r13
-		ror r15, 8
 		shr r13, 1
 
-		cmp r14, 1024
-		ja __no_noise
+		cmp r14, 1024*6
+		jb __noror
+		xor r13, r14
+		not r13
+
+__noror:
+		xor r15, r13
+		ror r15, 8
 		not r15
 
-__no_noise:
 
 		cmp r14, 1024*8
 		jnz __sampleloop
