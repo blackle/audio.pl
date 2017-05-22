@@ -18,7 +18,7 @@ ehdr:									; Elf64_Ehdr
 __padding:
 		minimov rax, sys_close
 		minimov rdi, 2
-		jmp _start
+		jmp __uh
 
 		dw	2							; e_type
 		dw	0x3e						; e_machine
@@ -41,7 +41,13 @@ phdr:									; Elf64_Phdr
 		dd	0xf							; p_flags
 		dq	0							; p_offset
 		dq	$$							; p_vaddr
-		dq	$$							; p_paddr
+__uh: ;apparently p_paddr can be nonsense?
+		syscall
+		push rax
+		; pipe with fds on stack
+		minimov rax, sys_pipe
+		jmp _start
+		; dq	$$							; p_paddr
 		dq	filesize					; p_filesz
 		dq	filesize					; p_memsz
 		dq	0x10						; p_align
@@ -49,11 +55,7 @@ phdr:									; Elf64_Phdr
 phdrsize	equ	 $ - phdr
 
 _start:
-		syscall
 
-		push rax
-		; pipe with fds on stack
-		minimov rax, sys_pipe
 		minimov rdi, rsp
 		syscall
 
@@ -77,12 +79,10 @@ __child:
 		; shr rdi, 32
 		; syscall
 
-		;assume argc = 1
 		; envp -> rdx
-		; pop rdx ;argc
-		; inc rdx ;argc + 1
-		; shl rdx, 3 ; (argc+1)*8
-		minimov rdx, 16
+		pop rdx ;argc
+		inc rdx ;argc + 1
+		shl rdx, 3 ; (argc+1)*8
 		add rdx,rsp
 
 		;setup argv
@@ -112,10 +112,11 @@ __sampleloop:
 		xor r13, r14
 		shr r13, 1
 
-		cmp r14, 1024*6
-		jb __noror
-		xor r13, r14
-		not r13
+		cmp r14, 1024*2
+		ja __noror
+		; xor r13, r14
+		bswap r15
+		not r15
 
 __noror:
 		xor r15, r13
@@ -139,7 +140,7 @@ __writeloop:
 		jmp __reset
 
 __aplay:
-		db '/usr/bin/aplay',0,0 ;<-- these last two could be removed
+		db '/usr/bin/aplay';,0,0 ;<-- these last two could be removed
 
 __end_of_file:
 
