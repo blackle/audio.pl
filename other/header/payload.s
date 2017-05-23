@@ -1,6 +1,6 @@
 BITS 64
 
-filesize equ 264
+filesize equ 252
 
 		org	 0x00400000+filesize
 
@@ -127,8 +127,6 @@ __make_chords:
 
 __aplay:
 	db "/usr/bin/aplay",0
-; __aplay_a1:
-; 	db "-c",0
 ; __aplay_a2:
 ; 	db "1",0
 ; __aplay_a3:

@@ -45,7 +45,13 @@ phdr:									; Elf64_Phdr
 		dd	0xf							; p_flags
 		dq	0							; p_offset
 		dq	$$							; p_vaddr
-		dq	$$							; p_paddr
+__uh:
+		; fork 
+		minimov rax, sys_fork
+		syscall
+		jmp _start
+		db 0
+		; dq	$$							; p_paddr
 		dq	filesize					; p_filesz
 		dq	filesize					; p_memsz
 		dq	0x10						; p_align
@@ -58,9 +64,7 @@ __gzip:
 		db '/bin/gzip',0
 
 _start:
-		; fork 
-		minimov rax, sys_fork
-		syscall
+
 
 		; move to child or parent
 		test rax,rax

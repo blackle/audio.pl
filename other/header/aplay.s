@@ -80,9 +80,11 @@ __child:
 		; syscall
 
 		; envp -> rdx
-		pop rdx ;argc
-		inc rdx ;argc + 1
-		shl rdx, 3 ; (argc+1)*8
+		; pop rdx ;argc
+		; inc rdx ;argc + 1
+		; shl rdx, 3 ; (argc+1)*8
+		; assume argc = 1
+		minimov rdx, 16+8
 		add rdx,rsp
 
 		;setup argv
@@ -101,9 +103,9 @@ __parent:
 		;get pipe write fd
 		shr rdi, 32
 
-		xor r15, r15
-		xor r13, r13
+		; xor r15, r15
 __reset:
+		add r13, r14 ;don't ask
 		xor r14, r14
 __sampleloop:
 		inc r14
@@ -112,11 +114,16 @@ __sampleloop:
 		xor r13, r14
 		shr r13, 1
 
-		cmp r14, 1024*2
+		cmp r14w, 1024*2
 		ja __noror
 		; xor r13, r14
 		bswap r15
 		not r15
+
+		cmp r14w, 512
+		ja __noror
+		; dec r13
+		bswap r13d
 
 __noror:
 		xor r15, r13
@@ -124,14 +131,11 @@ __noror:
 		not r15
 
 
-		cmp r14, 1024*8
+		cmp r14w, 1024*8
 		jnz __sampleloop
 
 		minimov rsi, rsp
 		minimov rdx, 1024*8*8
-
-__writeloop:
-		;write some stuff
 		minimov rax, sys_write
 		; minimov rdi, 1
 		syscall

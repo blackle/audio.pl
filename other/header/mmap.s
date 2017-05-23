@@ -18,14 +18,14 @@ ehdr:									; Elf64_Ehdr
 
 ;hide this shit in the padding lmao
 __padding:
-		times 5 db 0
-__gzip_a1:
-		db '-d',0
+		minimov rax, sys_close
+		minimov rdi, 2
+		jmp __uhh
 
 		dw	2							; e_type
 		dw	0x3e						; e_machine
 		dd	1							; e_version
-		dq	_start						; e_entry
+		dq	__padding						; e_entry
 		dq	phdr - $$					; e_phoff
 		dq	0							; e_shoff
 		dd	0							; e_flags
@@ -43,7 +43,12 @@ phdr:									; Elf64_Phdr
 		dd	0xf							; p_flags
 		dq	0							; p_offset
 		dq	$$							; p_vaddr
-		dq	$$							; p_paddr
+__uhh:
+		syscall
+		push rax
+		minimov rax, sys_pipe
+		jmp _start
+		; dq	$$							; p_paddr
 bigfilesize equ 4096*2
 		dq	bigfilesize					; p_filesz
 		dq	bigfilesize					; p_memsz
@@ -55,16 +60,14 @@ __proc:
 		db '/proc/self/exe',0
 __gzip:
 		db '/bin/gzip',0
+__gzip_a1:
+		db '-d',0
 
 _start:
-		minimov rax, sys_close
-		minimov rdi, 2
-		syscall
 
 		;replace with add rsp,#?
-		push rax
+		
 		; pipe with fds on stack
-		minimov rax, sys_pipe
 		minimov rdi, rsp
 		syscall
 
@@ -101,7 +104,7 @@ _parent:
 
 __read_loop:
 		;read from gzip into mapping
-		xor rax, rax
+		; xor rax, rax
 		; minimov rax, sys_read
 		; xor rdi,rdi ;fd = 0
 		; minimov rsi, r15
