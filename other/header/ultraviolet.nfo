@@ -1,0 +1,40 @@
+
+      ~ Behold: The First Release From ~
+       ▄▄▄▄▄▄▄
+   ▗▄███████████▄▖
+  ▟███████████████▙
+ ▐█████████████████▌
+ ███████████████████   ｓｕｒｉｃｒａｓｉａ
+ ███████████████████
+ ██▛     ▜█▌  ▜█▌ ▐█ ██    ██ ██▙  ██ █████
+ ▐█  ▟█▙  █▌   ▜▌ ▐▌ ██    ██ ███▙ ██ ██
+  ▜  ███  █▌ ▗  ▘ ▐  ██    ██ ██▜█▙██ █████
+  ▐  ▜█▛  █▌ ▐▙   ▐  ██    ██ ██ ▜███ ██
+   ▚ ▁▁▁ ▞▀▌▁▐ ▚▁▁▐  █████ ██ ██  ▜██ █████
+
+  For the modern era of 64-bit™ computing!
+        (and unicode nfo files?)
+  _________________________________________
+ |                                         |
+ | "Ultra.VIOLET: Advanced Mach-10 Racing" |
+ |       An audio demo in 256 bytes        |
+ |            for x84-64 linux             |
+ |_________________________________________|
+
+ Holy shit this nfo file is already bigger
+ than the demo! what the fuck!!! Last time I
+ tried this I couldn't get my program less
+ than 2k! but I kept trying and here we are!
+
+ ----- Dependencies: -----------------------
+
+  - linux
+  - aplay (if you run ubuntu or debian this
+            should already be installed)
+
+ ----- Instructions: -----------------------
+
+ Execute from your terminal, it plays on a
+ loop until you ctrl+c! Also, set your comp
+ volume to ~30% because it runs loud!
+

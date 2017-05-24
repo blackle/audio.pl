@@ -18,7 +18,7 @@ ehdr:									; Elf64_Ehdr
 __padding:
 		minimov rax, sys_close
 		minimov rdi, 2
-		jmp __uh
+		jmp __uh3
 
 		dw	2							; e_type
 		dw	0x3e						; e_machine
@@ -38,15 +38,21 @@ ehdrsize	equ	 $ - ehdr
 
 phdr:									; Elf64_Phdr
 		dd	1							; p_type
-		dd	0xf							; p_flags
+__uh3: ;p_flags is supposed to be 0x0f, and syscall is 0x0f05, so I can put code here!
+		syscall
+		jmp __uh
+		; dd	0xf							; p_flags
+
 		dq	0							; p_offset
 		dq	$$							; p_vaddr
+
 __uh: ;apparently p_paddr can be nonsense?
-		syscall
 		push rax
 		; pipe with fds on stack
 		minimov rax, sys_pipe
+		minimov rdi, rsp
 		jmp _start
+
 		; dq	$$							; p_paddr
 		dq	filesize					; p_filesz
 		dq	filesize					; p_memsz
@@ -54,9 +60,11 @@ __uh: ;apparently p_paddr can be nonsense?
 
 phdrsize	equ	 $ - phdr
 
-_start:
+__tag:
 
-		minimov rdi, rsp
+	db "blackle" ;it's me!
+
+_start:
 		syscall
 
 		; fork 
@@ -83,6 +91,7 @@ __child:
 		; pop rdx ;argc
 		; inc rdx ;argc + 1
 		; shl rdx, 3 ; (argc+1)*8
+
 		; assume argc = 1
 		minimov rdx, 16+8
 		add rdx,rsp
@@ -105,7 +114,6 @@ __parent:
 
 		; xor r15, r15
 __reset:
-		add r13, r14 ;don't ask
 		xor r14, r14
 __sampleloop:
 		inc r14
